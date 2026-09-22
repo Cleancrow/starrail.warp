@@ -1,0 +1,670 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>스타레일 워프 계산기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600&family=Gowun+Batang:wght@700&display=swap">
+<style>
+:root{
+  --bg:#EEEDF4; --panel:#FBFAFD; --ink:#1C1B2E; --muted:#66647E; --line:#D9D7E6;
+  --gold:#A87A1E; --gold-soft:#F3E7C9; --lc:#4E5BB8; --lc-soft:#DFE2F6;
+  --good:#2E8A5B; --warn:#B7791F; --bad:#B4453C; --field:#FFFFFF;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#11121D; --panel:#1A1B2A; --ink:#E7E5F2; --muted:#9B99B5; --line:#2E2F45;
+    --gold:#E2B75A; --gold-soft:#3A311C; --lc:#8F9BF0; --lc-soft:#262A4A;
+    --good:#5CC48E; --warn:#E4A94A; --bad:#E27B70; --field:#141522;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#11121D; --panel:#1A1B2A; --ink:#E7E5F2; --muted:#9B99B5; --line:#2E2F45;
+  --gold:#E2B75A; --gold-soft:#3A311C; --lc:#8F9BF0; --lc-soft:#262A4A;
+  --good:#5CC48E; --warn:#E4A94A; --bad:#E27B70; --field:#141522;
+}
+*{box-sizing:border-box}
+html{color-scheme:light dark}body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans KR",system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;font-size:14px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:28px 48px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px 24px;margin-bottom:22px}
+h1{font-family:"Gowun Batang",serif;font-size:28px;margin:0;letter-spacing:-.01em;text-wrap:balance}
+h1 span{color:var(--gold)}
+.sub{color:var(--muted);margin:0;font-size:13px}
+.grid{display:grid;grid-template-columns:minmax(0,420px) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:880px){.grid{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:14px}
+fieldset{border:1px solid var(--line);border-radius:10px;background:var(--panel);margin:0;padding:14px 16px 16px;display:grid;grid-template-columns:1fr 1fr;gap:10px 12px;min-width:0}
+legend{font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--muted);padding:0 6px}
+legend b{color:var(--gold)} legend b.lc{color:var(--lc)}
+label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted);min-width:0}
+label.full{grid-column:1/-1}
+input[type=number],select{font:inherit;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:14px;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:7px;padding:7px 9px;width:100%;font-variant-numeric:tabular-nums}
+select{font-family:inherit}
+input:focus-visible,select:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--gold);outline-offset:1px}
+.check{flex-direction:row;align-items:center;gap:8px;color:var(--ink);font-size:13.5px}
+.check input{width:16px;height:16px;accent-color:var(--gold)}
+details{grid-column:1/-1}
+details summary{cursor:pointer;color:var(--muted);font-size:12.5px}
+details .inner{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px;margin-top:10px}
+.hint{grid-column:1/-1;font-size:12px;color:var(--muted);margin:0}
+/* results */
+.hero{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px 22px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+@media (max-width:560px){.hero{grid-template-columns:1fr}}
+.stat .k{font-size:12px;color:var(--muted);letter-spacing:.04em}
+.stat .v{font-family:"IBM Plex Mono",monospace;font-size:30px;font-weight:600;line-height:1.15;font-variant-numeric:tabular-nums}
+.stat .v small{font-size:14px;color:var(--muted);font-weight:500;margin-left:3px}
+.stat .d{font-size:12.5px;color:var(--muted)}
+.avg{grid-column:1/-1;border-top:1px dashed var(--line);padding-top:14px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.avg .lbl{font-size:12px;color:var(--muted)}
+.avg .res{font-family:"Gowun Batang",serif;font-size:22px}
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:12px;border-radius:99px;padding:3px 10px;background:var(--gold-soft);color:var(--gold);font-weight:500}
+.chip.lc{background:var(--lc-soft);color:var(--lc)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+.card h2{font-size:13px;letter-spacing:.06em;color:var(--muted);margin:0 0 12px;font-weight:700}
+.rows{display:flex;flex-direction:column;gap:7px}
+.row{display:grid;grid-template-columns:118px minmax(0,1fr) 62px;gap:10px;align-items:center}
+.row .name{font-size:13px;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:2px;background:var(--gold);flex:none}
+.dot.lc{background:var(--lc)}
+.bar{height:14px;background:var(--bg);border-radius:4px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--gold);border-radius:4px;transition:width .35s ease}
+.bar i.lc{background:var(--lc)}
+.row .pct{font-family:"IBM Plex Mono",monospace;text-align:right;font-variant-numeric:tabular-nums;font-size:13px}
+.pct.g{color:var(--good)} .pct.w{color:var(--warn)} .pct.b{color:var(--bad)}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);font-size:13px}
+th{color:var(--muted);font-weight:500;font-size:12px}
+td.m{font-family:"IBM Plex Mono",monospace}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:640px){.two{grid-template-columns:1fr}}
+.foot{font-size:12px;color:var(--muted);line-height:1.6}
+.foot p{margin:0 0 6px}
+.status{font-size:12px;color:var(--muted)}
+button{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:7px;padding:6px 12px}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.tab{border:0;border-bottom:2px solid transparent;border-radius:0;background:none;padding:10px 14px;color:var(--muted);font-weight:500;font-size:14px;margin-bottom:-1px}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--gold)}
+.clist{grid-column:1/-1;display:flex;flex-direction:column;gap:8px}
+.crow{display:grid;grid-template-columns:minmax(0,1fr) 82px 92px 32px;gap:8px;align-items:center}
+.crow input[type=text]{font:inherit;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:7px;padding:7px 9px;width:100%}
+.crow input[type=text]:focus-visible{outline:2px solid var(--gold);outline-offset:1px}
+.crow .x{padding:6px 0;color:var(--muted)}
+.chead{font-size:12px;color:var(--muted)}
+.add{grid-column:1/-1;justify-self:start}
+.verdict{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px;display:flex;flex-wrap:wrap;gap:10px 28px;align-items:center}
+.verdict .big{font-family:"Gowun Batang",serif;font-size:40px;line-height:1.1}
+.verdict .big b{font-family:"IBM Plex Mono",monospace;font-weight:600}
+.verdict .tag{font-size:20px;font-weight:700;padding:6px 16px;border-radius:8px}
+.verdict p{margin:0;color:var(--muted);font-size:13px;flex-basis:100%}
+.lucks{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+.luck .k{font-size:12px;color:var(--muted)}
+.luck .v{font-family:"IBM Plex Mono",monospace;font-size:24px;font-weight:600;font-variant-numeric:tabular-nums}
+.luck .d{font-size:12.5px;color:var(--muted)}
+.hist{display:flex;align-items:flex-end;gap:2px;height:120px;border-bottom:1px solid var(--line);padding-top:6px}
+.hist i{flex:1;background:var(--line);border-radius:2px 2px 0 0;min-height:1px;position:relative}
+.hist i.me{background:var(--gold)}
+.hist i.me.lc{background:var(--lc)}
+.hax{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-family:"IBM Plex Mono",monospace;margin-top:4px}
+.rk{display:inline-block;font-family:"IBM Plex Sans KR",system-ui,sans-serif;font-size:15px;font-weight:700;padding:3px 12px;border-radius:6px;margin:4px 0}
+.trucks{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.truck{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:12px 14px;border-radius:9px;border:1px solid var(--gold);background:var(--gold-soft);color:var(--ink);text-align:left}
+.truck:hover{filter:brightness(1.04)}
+.truck:active{transform:translateY(1px)}
+.truck b{font-size:15px}
+.truck span{font-size:12px;color:var(--muted);font-family:"IBM Plex Mono",monospace}
+.truck em{font-style:normal;font-size:12px;color:var(--gold);font-weight:700}
+.spent{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;border-radius:8px;background:var(--bg);font-size:13px}
+.spent .m{font-family:"IBM Plex Mono",monospace;font-weight:600;font-variant-numeric:tabular-nums}
+.up{color:var(--good);font-family:"IBM Plex Mono",monospace}
+tr.cur td{background:var(--gold-soft)}
+.wide{overflow-x:auto}
+.legend{font-size:12px;color:var(--muted);margin-top:6px}
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>스타레일 <span>워프</span> 계산기</h1>
+      <p class="sub">앞으로 몇 돌까지 갈지, 지금까지 운이 어땠는지 계산해줘.</p>
+    </div>
+    <span class="status" id="status">계산 중…</span>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button type="button" class="tab" role="tab" id="tbF" aria-selected="true">앞으로 계산</button>
+    <button type="button" class="tab" role="tab" id="tbR" aria-selected="false">내 운 측정</button>
+  </div>
+  <div id="tabFwd">
+  <div class="grid">
+    <form class="col" id="f" onsubmit="return false">
+      <fieldset>
+        <legend>재화</legend>
+        <label>성옥 (원석)<input type="number" id="jade" min="0" value="0"></label>
+        <label>오래된 꿈<input type="number" id="dream" min="0" value="0"></label>
+        <label>한정 티켓<input type="number" id="tix" min="0" value="0"></label>
+        <label>꺼지지 않는 스타라이트<input type="number" id="star" min="0" value="0"></label>
+        <label>꺼지지 않는 불꽃<input type="number" id="ember" min="0" value="0"></label>
+        <p class="hint">오래된 꿈은 성옥 1:1로 쳐서 같이 계산해.</p>
+      </fieldset>
+
+      <fieldset>
+        <legend><b>트럭</b> 지르기</legend>
+        <div class="trucks">
+          <button type="button" class="truck" id="buyFull"><b>1트럭</b><span>119,000원</span><em id="fullAmt">꿈 +12,960 (초회)</em></button>
+          <button type="button" class="truck" id="buyHalf"><b>반트럭</b><span>65,000원</span><em id="halfAmt">꿈 +6,560 (초회)</em></button>
+        </div>
+        <label class="check"><input type="checkbox" id="firstFull" checked> 1트럭 초회 남음</label>
+        <label class="check"><input type="checkbox" id="firstHalf" checked> 반트럭 초회 남음</label>
+        <div class="spent"><span id="spentTxt">아직 안 질렀어</span><button type="button" id="undoBuy">지른 거 취소</button></div>
+        <p class="hint">누른 만큼 오래된 꿈이 더해진 상태로 계산돼. 초회 보너스는 상품마다 첫 1번만 적용돼.</p>
+      </fieldset>
+
+      <fieldset>
+        <legend><b>캐릭터</b> 배너</legend>
+        <label>5성 스택<input type="number" id="cP" min="0" max="89" value="0"></label>
+        <label>4성 스택<input type="number" id="c4" min="0" max="9" value="0"></label>
+        <label class="full check"><input type="checkbox" id="cG"> 확천 상태 (지난 5성이 픽뚫)</label>
+        <label>현재 보유 돌파
+          <select id="cCur">
+            <option value="-1" selected>미보유</option>
+            <option value="0">E0 (명함)</option><option value="1">E1</option><option value="2">E2</option>
+            <option value="3">E3</option><option value="4">E4</option><option value="5">E5</option>
+          </select></label>
+        <label>목표 돌파
+          <select id="cT">
+            <option value="0">E0 (명함)</option><option value="1">E1</option><option value="2">E2</option>
+            <option value="3">E3</option><option value="4">E4</option><option value="5">E5</option><option value="6" selected>E6 (풀돌)</option>
+          </select></label>
+        <label>보유 상시 5성 캐릭 수<input type="number" id="stdOwn" min="0" value="0"></label>
+        <label>상시 5성 캐릭 풀<input type="number" id="stdPool" min="1" value="7"></label>
+        <label>그중 풀돌(E6) 상시캐 수<input type="number" id="stdMax" min="0" value="0"></label>
+        <p class="hint">픽뚫로 이미 가진 상시캐가 나오면 스타라이트 40개, 풀돌 캐릭이 나오면 100개가 들어와서 계산에 반영돼. 풀돌 아닌 보유 캐릭은 E0으로 쳐.</p>
+      </fieldset>
+
+      <fieldset>
+        <legend><b class="lc">전용 광추</b> 배너</legend>
+        <label class="full check"><input type="checkbox" id="lcOn" checked> 전광도 뽑기</label>
+        <label>현재 보유 중첩
+          <select id="lCur">
+            <option value="0" selected>없음</option><option value="1">1재</option><option value="2">2재</option>
+            <option value="3">3재</option><option value="4">4재</option>
+          </select></label>
+        <label>목표 중첩
+          <select id="lT">
+            <option value="1" selected>1재</option><option value="2">2재</option><option value="3">3재</option>
+            <option value="4">4재</option><option value="5">5재</option>
+          </select></label>
+        <label>5성 스택<input type="number" id="lP" min="0" max="79" value="0"></label>
+        <label>4성 스택<input type="number" id="l4" min="0" max="9" value="0"></label>
+        <label class="full check"><input type="checkbox" id="lG"> 확천 상태 (지난 5성이 픽뚫)</label>
+        <label class="full">뽑는 순서
+          <select id="order">
+            <option value="e0lc" selected>캐릭 명함 → 전광 목표 → 남은 걸로 돌파</option>
+            <option value="cfirst">캐릭 목표 돌파 먼저 → 전광</option>
+            <option value="lcfirst">전광 목표 먼저 → 캐릭</option>
+          </select></label>
+      </fieldset>
+
+      <fieldset>
+        <legend>고급 설정</legend>
+        <details>
+          <summary>확률 · 환급 · 시뮬레이션 횟수</summary>
+          <div class="inner">
+            <label>캐릭 픽업 승률 %<input type="number" id="winC" min="0" max="100" value="50"></label>
+            <label>광추 픽업 승률 %<input type="number" id="winL" min="0" max="100" value="75"></label>
+            <label>4성 1개당 스타라이트<input type="number" id="s4" min="0" value="8"></label>
+            <label>이번 달 불꽃 교환 남은 횟수<input type="number" id="emLim" min="0" value="5"></label>
+            <label class="full">시뮬레이션 횟수
+              <select id="N"><option value="10000">1만 (빠름)</option><option value="30000" selected>3만</option><option value="100000">10만 (정밀)</option></select></label>
+          </div>
+        </details>
+        <p class="hint" style="margin-top:4px"><button type="button" id="reset">기본값으로 되돌리기</button></p>
+      </fieldset>
+    </form>
+
+    <section class="col" aria-live="polite">
+      <div class="hero">
+        <div class="stat"><div class="k">지금 바로 가능한 뽑기</div><div class="v" id="base">–</div><div class="d" id="baseD"></div></div>
+        <div class="stat"><div class="k">환급 포함 평균 총 뽑기</div><div class="v" id="tot">–</div><div class="d" id="totD"></div></div>
+        <div class="stat"><div class="k">목표 전부 달성 확률</div><div class="v" id="full">–</div><div class="d" id="fullD"></div></div>
+        <div class="avg">
+          <span class="lbl">딱 평균 운이면</span>
+          <span class="res" id="avgRes">–</span>
+          <span id="avgChips"></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>단계별 달성 확률 (그 단계 이상 갈 확률)</h2>
+        <div class="rows" id="rows"></div>
+      </div>
+
+      <div class="card">
+        <h2>여기서 더 지르면? (지금 상태 기준)</h2>
+        <div class="wide"><table><thead><tr><th>추가</th><th>금액</th><th>+뽑기</th><th id="kHead">다음 단계</th><th>목표 전부</th><th>평균 운 결과</th></tr></thead><tbody id="spendT"><tr><td colspan="6" class="hint">계산 중…</td></tr></tbody></table></div>
+        <p class="hint" style="margin-top:8px" id="spendNote"></p>
+      </div>
+
+      <div class="two">
+        <div class="card">
+          <h2>운 순위별 결과</h2>
+          <table><thead><tr><th>운</th><th>최종 결과</th></tr></thead><tbody id="pct"></tbody></table>
+        </div>
+        <div class="card foot">
+          <h2>계산 규칙</h2>
+          <p><b>캐릭 배너</b> 5성 0.6%, 74뽑부터 뽑을 때마다 +6%, 90뽑 확정. 픽뚫이면 다음 5성은 확천.</p>
+          <p><b>광추 배너</b> 5성 0.8%, 66뽑부터 +7%, 80뽑 확정. 픽업 승률 75%.</p>
+          <p><b>4성</b> 10뽑 안에 확정 (9번째 뽑기 소프트 천장).</p>
+          <p><b>환급</b> 스타라이트 20개 = 티켓 1장. 5성 광추·중복 5성 캐릭은 40개, 풀돌(E6) 넘은 5성 캐릭은 100개, 4성은 설정값만큼. 3성은 불꽃 20개, 불꽃 20개 = 티켓 1장 (월 한도 있음).</p>
+          <p>티켓 → 성옥 → 스타라이트 → 불꽃 순서로 쓰고, 목표를 다 채우면 멈춰.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+  </div>
+  <div id="tabRev" hidden>
+  <div class="grid">
+    <form class="col" id="rf" onsubmit="return false">
+      <fieldset>
+        <legend>쓴 뽑기</legend>
+        <label>캐릭 배너 총 뽑기<input type="number" id="rN" min="0" value="0"></label>
+        <label>광추 배너 총 뽑기<input type="number" id="rNL" min="0" value="0"></label>
+        <label>캐릭 픽뚫 횟수<input type="number" id="rLost" min="0" value=""></label>
+        <label>광추 픽뚫 횟수<input type="number" id="rLostL" min="0" value=""></label>
+        <label class="full check"><input type="checkbox" id="rG"> 지금 캐릭 배너 확천 상태</label>
+        <label class="full check"><input type="checkbox" id="rGL"> 지금 광추 배너 확천 상태</label>
+        <p class="hint">픽뚫 횟수를 모르면 비워둬. 반반 승률만 빼고 계산해.</p>
+      </fieldset>
+      <fieldset>
+        <legend><b>뽑은 한정 캐릭</b></legend>
+        <div class="clist" id="clist"></div>
+        <button type="button" class="add" id="addC">+ 캐릭 추가</button>
+        <p class="hint">한정 배너에서 얻은 것만 넣어. E0 = 1장, E2 = 3장으로 계산해.</p>
+      </fieldset>
+      <fieldset>
+        <legend>고급 설정</legend>
+        <details>
+          <summary>시작 스택 · 확률</summary>
+          <div class="inner">
+            <label>기록 시작 때 캐릭 스택<input type="number" id="rS" min="0" max="89" value="0"></label>
+            <label>기록 시작 때 광추 스택<input type="number" id="rSL" min="0" max="79" value="0"></label>
+            <p class="hint">픽업 승률은 '앞으로 계산' 탭의 고급 설정 값을 같이 써.</p>
+          </div>
+        </details>
+      </fieldset>
+    </form>
+
+    <section class="col" aria-live="polite">
+      <div class="verdict">
+        <span class="big">당신의 운은 <b id="vPct">–</b></span>
+        <span class="tag" id="vTag">–</span>
+        <p id="vDesc"></p>
+      </div>
+      <div class="card lucks" id="lucks"></div>
+      <div class="two">
+        <div class="card"><h2>캐릭 배너: 같은 뽑기 수로 나올 한정 개수</h2><div id="hC"></div></div>
+        <div class="card"><h2>광추 배너: 같은 뽑기 수로 나올 한정 개수</h2><div id="hL"></div></div>
+      </div>
+      <div class="card foot">
+        <h2>계산 방법</h2>
+        <p>같은 뽑기 수를 쓴 모든 경우의 확률을 정확히 계산해서(시뮬레이션 아님), 네 결과보다 잘 나올 확률을 구해. 결과가 같은 경우는 절반으로 나눠서 넣어.</p>
+        <p><b>종합 운</b>은 캐릭 1장을 평균 기대 뽑기 수로, 전광 1재도 평균 기대 뽑기 수로 환산해서 합친 가치로 비교해.</p>
+        <p><b>랭크</b>는 롤 솔랭 KR 서버 티어 분포(League of Graphs, 2026년 9월)에 상위 %를 그대로 대입해서 정해. 예를 들어 상위 1.6%면 다이아몬드 I이야.</p>
+        <p><b>반반 승률</b>은 확천으로 얻은 건 빼고, 픽업 승률 판정을 받은 뽑기만 세.</p>
+      </div>
+    </section>
+  </div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const IDS = ["jade","tix","star","ember","cP","c4","cG","cCur","cT","stdOwn","stdPool","stdMax","lcOn","lCur","lT","lP","l4","lG","firstFull","firstHalf","dream","order","winC","winL","s4","emLim","N"];
+const KEY = "hsr-warp-calc-v2";
+const defaults = {};
+IDS.forEach(id => { const el=$(id); defaults[id] = el.type==="checkbox" ? el.checked : el.value; });
+
+function load(){ try{ const s=JSON.parse(localStorage.getItem(KEY)||"null"); if(!s) return;
+  IDS.forEach(id=>{ if(id in s){ const el=$(id); if(el.type==="checkbox") el.checked=s[id]; else el.value=s[id]; } }); }catch(e){} }
+function save(v){ try{ localStorage.setItem(KEY, JSON.stringify(v)); }catch(e){} }
+
+function read(){
+  const v={}; IDS.forEach(id=>{ const el=$(id); v[id]= el.type==="checkbox" ? el.checked : (el.tagName==="SELECT" && id==="order" ? el.value : Number(el.value)||0); });
+  return v;
+}
+
+function buildSteps(v){
+  const cNeed = Math.max(0, v.cT - v.cCur);
+  const lNeed = v.lcOn ? Math.max(0, v.lT - v.lCur) : 0;
+  const C = Array(cNeed).fill("C"), L = Array(lNeed).fill("L");
+  if(v.order==="cfirst") return C.concat(L);
+  if(v.order==="lcfirst") return L.concat(C);
+  if(v.cCur<0 && cNeed>0) return ["C"].concat(L, C.slice(1));
+  return C.concat(L);
+}
+function stateAfter(v, steps, k){
+  let e=v.cCur, s=v.lCur;
+  for(let i=0;i<k;i++){ if(steps[i]==="C") e++; else s++; }
+  return {e,s};
+}
+function label(v,st){
+  const c = st.e<0 ? "캐릭 없음" : "E"+st.e;
+  return v.lcOn ? c+" · "+(st.s>0? "전광 "+st.s+"재" : "전광 없음") : c;
+}
+
+function simulate(v, steps){
+  const N=v.N, R=Math.random, K=steps.length;
+  const winC=v.winC/100, winL=v.winL/100;
+  const done=new Int32Array(N), capacity=new Float64Array(N);
+  const endPity=new Float64Array(N), endG=new Uint8Array(N), endBanner=new Uint8Array(N);
+  const stdE=new Int8Array(Math.max(1,v.stdPool));
+  for(let r=0;r<N;r++){
+    let tix=v.tix, jade=v.jade, star=v.star, ember=v.ember, emLim=v.emLim;
+    let cP=v.cP, c4=v.c4, cG=v.cG, lP=v.lP, l4=v.l4, lG=v.lG;
+    const pool=Math.max(1,v.stdPool), own=Math.min(v.stdOwn,pool), mx=Math.min(v.stdMax,own);
+    for(let i=0;i<pool;i++) stdE[i]= i<mx ? 6 : i<own ? 0 : -1;
+    let eid=v.cCur;
+    let used=0, k=0;
+    outer: while(k<K){
+      const isC = steps[k]==="C";
+      while(true){
+        // pay for one pull
+        if(tix<=0){
+          if(jade>=160){ tix+=Math.floor(jade/160); jade%=160; }
+          else if(star>=20){ tix+=Math.floor(star/20); star%=20; }
+          else if(ember>=20 && emLim>0){ const n=Math.min(emLim, Math.floor(ember/20)); tix+=n; ember-=n*20; emLim-=n; }
+          else break outer;
+        }
+        tix--; used++;
+        if(isC){
+          cP++; c4++;
+          const p5 = cP>=90 ? 1 : cP<74 ? 0.006 : 0.006+0.06*(cP-73);
+          if(R()<p5){
+            cP=0;
+            if(cG || R()<winC){ cG=false; if(eid>=0) star+=40; eid++; k++; break; }
+            cG=true;
+            const si=(R()*pool)|0, se=stdE[si];
+            if(se<0) stdE[si]=0; else if(se<6){ star+=40; stdE[si]=se+1; } else star+=100;
+          } else {
+            const p4 = c4>=10 ? 1 : c4===9 ? 0.561 : 0.051;
+            if(R()<p4){ c4=0; star+=v.s4; } else ember+=20;
+          }
+        } else {
+          lP++; l4++;
+          const p5 = lP>=80 ? 1 : lP<66 ? 0.008 : 0.008+0.07*(lP-65);
+          if(R()<p5){
+            lP=0; star+=40;
+            if(lG || R()<winL){ lG=false; k++; break; }
+            lG=true;
+          } else {
+            const p4 = l4>=10 ? 1 : l4===9 ? 0.6 : 0.066;
+            if(R()<p4){ l4=0; star+=v.s4; } else ember+=20;
+          }
+        }
+      }
+    }
+    const left = tix + Math.floor(jade/160) + Math.floor(star/20) + Math.min(emLim, Math.floor(ember/20));
+    done[r]=k; capacity[r]=used+left;
+    const nb = k<K ? steps[k] : null;
+    endBanner[r] = nb==="L" ? 2 : 1;
+    endPity[r] = nb==="L" ? lP : cP;
+    endG[r] = nb==="L" ? (lG?1:0) : (cG?1:0);
+  }
+  return {done, capacity, endPity, endG, endBanner};
+}
+
+// ===== 트럭 =====
+const TRUCK={full:{price:119000,normal:8080,first:12960},half:{price:65000,normal:3880,first:6560}};
+let bought={full:0,half:0};
+try{ const b=JSON.parse(localStorage.getItem("hsr-warp-truck-v1")||"null"); if(b&&typeof b.full==="number") bought=b; }catch(e){}
+function saveBought(){ try{ localStorage.setItem("hsr-warp-truck-v1",JSON.stringify(bought)); }catch(e){} }
+function dreamsOf(nF,nH,v){
+  const f = nF>0 ? (v.firstFull ? TRUCK.full.first+(nF-1)*TRUCK.full.normal : nF*TRUCK.full.normal) : 0;
+  const h = nH>0 ? (v.firstHalf ? TRUCK.half.first+(nH-1)*TRUCK.half.normal : nH*TRUCK.half.normal) : 0;
+  return f+h;
+}
+const won=n=>n.toLocaleString()+"원";
+function updateTruckUI(v){
+  $("fullAmt").textContent = "꿈 +"+(v.firstFull&&bought.full===0?TRUCK.full.first:TRUCK.full.normal).toLocaleString()+(v.firstFull&&bought.full===0?" (초회)":"");
+  $("halfAmt").textContent = "꿈 +"+(v.firstHalf&&bought.half===0?TRUCK.half.first:TRUCK.half.normal).toLocaleString()+(v.firstHalf&&bought.half===0?" (초회)":"");
+  const cost=bought.full*TRUCK.full.price+bought.half*TRUCK.half.price, d=dreamsOf(bought.full,bought.half,v);
+  $("spentTxt").innerHTML = cost ? `1트럭 ×${bought.full} · 반트럭 ×${bought.half} → <span class="m">${won(cost)}</span> · 꿈 +${d.toLocaleString()} (${Math.floor(d/160)}뽑)` : "아직 안 질렀어";
+}
+function summarize(v,steps,N){
+  const vv=Object.assign({},v,{N}); const res=simulate(vv,steps), K=steps.length;
+  const cnt=new Int32Array(K+1); for(let i=0;i<N;i++) cnt[res.done[i]]++;
+  const at=[]; let acc=0; for(let k=K;k>=0;k--){ acc+=cnt[k]; at[k]=acc/N; }
+  const sorted=Array.from(res.done).sort((a,b)=>a-b);
+  return {at, p:at[K], med:sorted[Math.floor(N/2)]};
+}
+
+function cls(p){ return p>=0.75?"g":p>=0.35?"w":"b"; }
+function fmtP(p){ if(p>=0.9995) return "100%"; if(p>0 && p<0.001) return p<0.000005 ? "<0.001%" : (p*100).toFixed(3)+"%"; return (p*100).toFixed(p<0.1?1:0)+"%"; }
+
+function run(){
+  const v=read(); save(v); updateTruckUI(v);
+  const bDream=dreamsOf(bought.full,bought.half,v);
+  v.jadeRaw=v.jade; v.jade = v.jade + v.dream + bDream;
+  const steps=buildSteps(v), K=steps.length;
+  const base = v.tix + Math.floor(v.jade/160);
+  $("base").innerHTML = base.toLocaleString()+"<small>뽑</small>";
+  $("baseD").textContent = `티켓 ${v.tix} + 성옥·꿈 ${Math.floor(v.jade/160)}뽑 (${v.jade%160}개 남음)` + (bDream? ` · 트럭 ${Math.floor(bDream/160)}뽑 포함`:"");
+  if(K===0){
+    $("status").textContent="목표가 이미 달성돼 있어";
+    $("tot").textContent="–"; $("full").textContent="100%"; $("fullD").textContent="";
+    $("avgRes").textContent=label(v,stateAfter(v,steps,0)); $("avgChips").innerHTML="";
+    $("rows").innerHTML=""; $("pct").innerHTML=""; return;
+  }
+  $("status").textContent="계산 중…";
+  setTimeout(()=>{
+    const t0=performance.now();
+    const res=simulate(v,steps), N=v.N;
+    const cnt=new Int32Array(K+1); let capSum=0;
+    for(let i=0;i<N;i++){ cnt[res.done[i]]++; capSum+=res.capacity[i]; }
+    const atLeast=[]; let acc=0; for(let k=K;k>=0;k--){ acc+=cnt[k]; atLeast[k]=acc/N; }
+
+    $("tot").innerHTML = Math.round(capSum/N).toLocaleString()+"<small>뽑</small>";
+    $("totD").textContent = `스타라이트·불꽃 환급으로 +${Math.round(capSum/N - base - Math.floor(v.star/20))}뽑 정도`;
+    $("full").innerHTML = fmtP(atLeast[K]);
+    $("full").className = "v"; $("full").style.color = `var(--${ {g:"good",w:"warn",b:"bad"}[cls(atLeast[K])] })`;
+    $("fullD").textContent = "목표: "+label(v,stateAfter(v,steps,K));
+
+    // median outcome
+    const sorted=Array.from(res.done).sort((a,b)=>a-b);
+    const med=sorted[Math.floor(N/2)];
+    const medSt=stateAfter(v,steps,med);
+    $("avgRes").textContent = label(v,medSt);
+    if(med<K){
+      let ps=0,gs=0,n=0; for(let i=0;i<N;i++) if(res.done[i]===med){ ps+=res.endPity[i]; gs+=res.endG[i]; n++; }
+      const isL = steps[med]==="L";
+      $("avgChips").innerHTML = `<span class="chip${isL?" lc":""}">${isL?"광추":"캐릭"} 배너 ${Math.round(ps/n)}스택</span> <span class="chip${isL?" lc":""}">확천 확률 ${Math.round(gs/n*100)}%</span>`;
+    } else {
+      $("avgChips").innerHTML = `<span class="chip">목표 달성 후에도 뽑기 남음</span>`;
+    }
+
+    // rows
+    let html="";
+    for(let k=1;k<=K;k++){
+      const st=stateAfter(v,steps,k), isL=steps[k-1]==="L", p=atLeast[k];
+      const nm = isL ? "전광 "+st.s+"재" : (st.e===0?"E0 명함":"E"+st.e);
+      html+=`<div class="row"><span class="name"><span class="dot${isL?" lc":""}"></span>${nm}</span><span class="bar"><i class="${isL?"lc":""}" style="width:${(p*100).toFixed(1)}%"></i></span><span class="pct ${cls(p)}">${fmtP(p)}</span></div>`;
+    }
+    $("rows").innerHTML=html;
+
+    // percentiles
+    const desc=sorted.slice().reverse();
+    const P=[[1,"상위 1%"],[10,"상위 10%"],[25,"상위 25%"],[50,"중간 (50%)"],[75,"하위 25%"],[90,"하위 10%"],[99,"하위 1%"]];
+    $("pct").innerHTML = P.map(([p,n])=>{ const k=desc[Math.max(0,Math.ceil(N*p/100)-1)]; return `<tr><td>${n}</td><td class="m">${label(v,stateAfter(v,steps,k))}</td></tr>`; }).join("");
+
+    $("status").textContent = `${N.toLocaleString()}회 시뮬레이션 · ${Math.round(performance.now()-t0)}ms`;
+    // 현질 비교
+    const token=++spendToken;
+    setTimeout(()=>{
+      if(token!==spendToken) return;
+      const OPTS=[[0,0,"지금 그대로"],[0,1,"+반트럭"],[1,0,"+1트럭"],[1,1,"+1.5트럭"],[2,0,"+2트럭"],[3,0,"+3트럭"],[5,0,"+5트럭"]];
+      const n2=Math.min(v.N,10000);
+      let ks=1; while(ks<K && atLeast[ks]>=0.5) ks++;
+      const stK=stateAfter(v,steps,ks), isLk=steps[ks-1]==="L";
+      $("kHead").textContent = (isLk?"전광 "+stK.s+"재":"E"+stK.e)+" 이상";
+      const fmtD=(a,b)=>{ const d=(a-b)*100; return ` <span class="up">(+${d<0.1?Math.max(0,d).toFixed(2):d.toFixed(1)}%p)</span>`; };
+      let rowsH="";
+      for(const [aF,aH,name] of OPTS){
+        const extra=dreamsOf(bought.full+aF,bought.half+aH,v)-bDream, cost=aF*TRUCK.full.price+aH*TRUCK.half.price;
+        const vv=Object.assign({},v,{jade:v.jade+extra});
+        const r = (aF||aH) ? summarize(vv,steps,n2) : {at:atLeast,p:atLeast[K],med:med};
+        const on=aF||aH;
+        rowsH+=`<tr class="${on?"":"cur"}"><td>${name}</td><td class="m">${cost?won(cost):"–"}</td><td class="m">${extra?"+"+Math.floor(extra/160):"–"}</td><td class="m">${fmtP(r.at[ks])}${on?fmtD(r.at[ks],atLeast[ks]):""}</td><td class="m">${fmtP(r.p)}${on?fmtD(r.p,atLeast[K]):""}</td><td class="m">${label(v,stateAfter(v,steps,r.med))}</td></tr>`;
+      }
+      if(token!==spendToken) return;
+      $("spendT").innerHTML=rowsH;
+      $("spendNote").textContent = `'다음 단계'는 지금 달성 확률이 50% 밑으로 떨어지는 첫 단계야. (+%p)는 지금 그대로보다 몇 %p 오르는지고. 1뽑 가격: 초회 1트럭 ${Math.round(119000/(12960/160)).toLocaleString()}원 · 초회 반트럭 ${Math.round(65000/(6560/160)).toLocaleString()}원 · 1트럭 ${Math.round(119000/(8080/160)).toLocaleString()}원 · 반트럭 ${Math.round(65000/(3880/160)).toLocaleString()}원.`;
+    },30);
+  },20);
+}
+
+let spendToken=0;
+let tm; function schedule(){ clearTimeout(tm); tm=setTimeout(run,250); }
+load();
+$("f").addEventListener("input",schedule);
+$("f").addEventListener("change",schedule);
+$("buyFull").addEventListener("click",()=>{ bought.full++; saveBought(); run(); });
+$("buyHalf").addEventListener("click",()=>{ bought.half++; saveBought(); run(); });
+$("undoBuy").addEventListener("click",()=>{ bought={full:0,half:0}; saveBought(); run(); });
+$("reset").addEventListener("click",()=>{ bought={full:0,half:0}; saveBought();  IDS.forEach(id=>{ const el=$(id); if(el.type==="checkbox") el.checked=defaults[id]; else el.value=defaults[id]; }); run(); });
+run();
+// ===== 역산 (운 측정) =====
+const RKEY="hsr-warp-rev-v2";
+const EXAMPLE=[{n:"캐릭1",e:0,l:1},{n:"캐릭2",e:2,l:1},{n:"캐릭3",e:0,l:0},{n:"캐릭4",e:1,l:0}];
+let chars=[];
+const RIDS=["rN","rNL","rLost","rLostL","rG","rGL","rS","rSL"];
+const rDefaults={}; RIDS.forEach(id=>{const el=$(id); rDefaults[id]=el.type==="checkbox"?el.checked:el.value;});
+function rLoad(){ try{ const s=JSON.parse(localStorage.getItem(RKEY)||"null"); if(!s) return;
+  RIDS.forEach(id=>{ if(id in s){const el=$(id); if(el.type==="checkbox") el.checked=s[id]; else el.value=s[id];} });
+  if(Array.isArray(s.chars)) chars=s.chars; }catch(e){} }
+function rSave(){ try{ const o={chars}; RIDS.forEach(id=>{const el=$(id); o[id]=el.type==="checkbox"?el.checked:el.value;}); localStorage.setItem(RKEY,JSON.stringify(o)); }catch(e){} }
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function renderList(){
+  let h=`<div class="crow chead"><span>캐릭 이름</span><span>돌파</span><span>전광</span><span></span></div>`;
+  chars.forEach((c,i)=>{
+    h+=`<div class="crow"><input type="text" id="cn${i}" data-i="${i}" data-f="n" value="${esc(c.n)}" aria-label="캐릭 이름">
+    <select id="ce${i}" data-i="${i}" data-f="e" aria-label="돌파">${[0,1,2,3,4,5,6].map(e=>`<option value="${e}"${c.e==e?" selected":""}>E${e}</option>`).join("")}</select>
+    <select id="cl${i}" data-i="${i}" data-f="l" aria-label="전광">${[0,1,2,3,4,5].map(e=>`<option value="${e}"${c.l==e?" selected":""}>${e?e+"재":"없음"}</option>`).join("")}</select>
+    <button type="button" class="x" data-del="${i}" aria-label="삭제">×</button></div>`;
+  });
+  $("clist").innerHTML=h;
+}
+const rateC=n=> n>=90?1 : n<74?0.006 : 0.006+0.06*(n-73);
+const rateL=n=> n>=80?1 : n<66?0.008 : 0.008+0.07*(n-65);
+// 정확한 분포: N뽑에서 한정 개수(k) 분포, cap 이상은 cap에 모음
+function limitedDist(N,rate,hard,win,sp,sg,cap){
+  const S=hard*2*(cap+1); let cur=new Float64Array(S);
+  const idx=(p,g,k)=>((p*2+g)*(cap+1)+k);
+  cur[idx(Math.min(sp,hard-1),sg?1:0,0)]=1;
+  for(let t=0;t<N;t++){
+    const nx=new Float64Array(S);
+    for(let p=0;p<hard;p++){ const r=rate(p+1);
+      for(let g=0;g<2;g++) for(let k=0;k<=cap;k++){
+        const pr=cur[idx(p,g,k)]; if(!pr) continue;
+        const k1=Math.min(cap,k+1);
+        if(p+1<hard) nx[idx(p+1,g,k)]+=pr*(1-r);
+        if(g){ nx[idx(0,0,k1)]+=pr*r; }
+        else { nx[idx(0,0,k1)]+=pr*r*win; nx[idx(0,1,k)]+=pr*r*(1-win); }
+      }
+    }
+    cur=nx;
+  }
+  const d=new Float64Array(cap+1);
+  for(let p=0;p<hard;p++) for(let g=0;g<2;g++) for(let k=0;k<=cap;k++) d[k]+=cur[idx(p,g,k)];
+  return d;
+}
+function pullsPer5(rate,hard){ let surv=1,e=0; for(let n=1;n<=hard;n++){ const r=rate(n); e+=n*surv*r; surv*=1-r; } return e; }
+function upperPct(dist,obs){ let gt=0; for(let k=obs+1;k<dist.length;k++) gt+=dist[k]; return gt+0.5*(dist[obs]||0); }
+function binom(n,k,p){ let c=1; for(let i=0;i<k;i++) c=c*(n-i)/(i+1); return c*Math.pow(p,k)*Math.pow(1-p,n-k); }
+// 롤 솔랭 티어 분포 (League of Graphs, KR 서버 · 2026년 9월 기준)
+const LOL=[["챌린저",0.0096,"#E8C15A","#1C1B2E"],["그랜드마스터",0.022,"#D8434B","#fff"],["마스터",0.68,"#A35BD1","#fff"],
+ ["다이아몬드 I",0.96,"#5B8DEF","#fff"],["다이아몬드 II",1.3,"#5B8DEF","#fff"],["다이아몬드 III",0.59,"#5B8DEF","#fff"],["다이아몬드 IV",1.5,"#5B8DEF","#fff"],
+ ["에메랄드 I",3.1,"#2FA37A","#fff"],["에메랄드 II",2,"#2FA37A","#fff"],["에메랄드 III",2.8,"#2FA37A","#fff"],["에메랄드 IV",5.3,"#2FA37A","#fff"],
+ ["플래티넘 I",2.6,"#3AAFA9","#fff"],["플래티넘 II",3.8,"#3AAFA9","#fff"],["플래티넘 III",4.6,"#3AAFA9","#fff"],["플래티넘 IV",7.6,"#3AAFA9","#fff"],
+ ["골드 I",3.7,"#C9A04A","#1C1B2E"],["골드 II",5.3,"#C9A04A","#1C1B2E"],["골드 III",6,"#C9A04A","#1C1B2E"],["골드 IV",8.4,"#C9A04A","#1C1B2E"],
+ ["실버 I",4.3,"#8C97A6","#1C1B2E"],["실버 II",5.3,"#8C97A6","#1C1B2E"],["실버 III",5.3,"#8C97A6","#1C1B2E"],["실버 IV",6.1,"#8C97A6","#1C1B2E"],
+ ["브론즈 I",3.5,"#A5694A","#fff"],["브론즈 II",3.8,"#A5694A","#fff"],["브론즈 III",3.6,"#A5694A","#fff"],["브론즈 IV",4.4,"#A5694A","#fff"],
+ ["아이언 I",1.6,"#6E6461","#fff"],["아이언 II",0.9,"#6E6461","#fff"],["아이언 III",0.44,"#6E6461","#fff"],["아이언 IV",0.4,"#6E6461","#fff"]];
+const LOL_TOTAL=LOL.reduce((a,r)=>a+r[1],0);
+function tier(u){ let cum=0; for(const r of LOL){ cum+=r[1]/LOL_TOTAL; if(u<=cum+1e-12) return [r[0],r[2],r[3]]; } const l=LOL[LOL.length-1]; return [l[0],l[2],l[3]]; }
+const rankChip=u=>{ const [n,bg,fg]=tier(u); return `<span class="rk" style="background:${bg};color:${fg}">${n}</span>`; };
+const fmtU=u=>"상위 "+(u<0.000005?"<0.001":u<0.001?(u*100).toFixed(3):u>0.999?">99.9":(u*100).toFixed(u<0.1?1:0))+"%";
+function hist(el,dist,obs,isL,mean){
+  let last=dist.length-1; while(last>obs+2 && dist[last]<1e-4) last--;
+  let first=0; while(first<obs-2 && dist[first]<1e-4) first++;
+  const mx=Math.max(...Array.from(dist).slice(first,last+1));
+  let h=`<div class="hist">`;
+  for(let k=first;k<=last;k++) h+=`<i class="${k===obs?"me"+(isL?" lc":""):""}" style="height:${(dist[k]/mx*100).toFixed(1)}%" title="${k}개: ${(dist[k]*100).toFixed(1)}%"></i>`;
+  h+=`</div><div class="hax"><span>${first}개</span><span>${last}${last===dist.length-1?"+":""}개</span></div><div class="legend">색칠된 막대가 너 (${obs}개) · 평균 ${mean.toFixed(1)}개</div>`;
+  el.innerHTML=h;
+}
+function rRun(){
+  rSave();
+  const v=read(), winC=v.winC/100, winL=v.winL/100;
+  const N=Math.max(0,Number($("rN").value)||0), NL=Math.max(0,Number($("rNL").value)||0);
+  const kc=chars.reduce((a,c)=>a+Number(c.e)+1,0), kl=chars.reduce((a,c)=>a+Number(c.l),0);
+  const capC=Math.max(kc+2,Math.ceil(N/40)+6), capL=Math.max(kl+2,Math.ceil(NL/30)+6);
+  const dC=N>0?limitedDist(N,rateC,90,winC,Number($("rS").value)||0,false,capC):null;
+  const dL=NL>0?limitedDist(NL,rateL,80,winL,Number($("rSL").value)||0,false,capL):null;
+  const mean=d=>d.reduce((a,p,k)=>a+p*k,0);
+  let cards="";
+  const uC=dC?upperPct(dC,Math.min(kc,capC)):null, uL=dL?upperPct(dL,Math.min(kl,capL)):null;
+  if(dC){ cards+=`<div class="luck"><div class="k">캐릭 배너 · ${N}뽑</div><div class="v">${rankChip(uC)}</div><div class="d">${fmtU(uC)}</div><div class="d">한정 ${kc}장 (평균 ${mean(dC).toFixed(1)}장) · 장당 ${kc?Math.round(N/kc):"–"}뽑</div></div>`; hist($("hC"),dC,Math.min(kc,capC),false,mean(dC)); } else $("hC").innerHTML=`<p class="hint">캐릭 배너 뽑기 수를 넣어줘.</p>`;
+  if(dL){ cards+=`<div class="luck"><div class="k">광추 배너 · ${NL}뽑</div><div class="v">${rankChip(uL)}</div><div class="d">${fmtU(uL)}</div><div class="d">전광 ${kl}재 (평균 ${mean(dL).toFixed(1)}재) · 1재당 ${kl?Math.round(NL/kl):"–"}뽑</div></div>`; hist($("hL"),dL,Math.min(kl,capL),true,mean(dL)); } else $("hL").innerHTML=`<p class="hint">광추 배너를 안 돌렸으면 비워둬도 돼.</p>`;
+  // 반반 승률
+  const lostRaw=$("rLost").value;
+  if(lostRaw!=="" && dC){
+    const lost=Number(lostRaw)||0, gW=Math.max(0,lost-($("rG").checked?1:0)), w=Math.max(0,kc-gW), n=w+lost;
+    if(n>0){ let gt=0,eq=0; for(let i=0;i<=n;i++){ const p=binom(n,i,winC); if(i>w) gt+=p; else if(i===w) eq=p; } const u=gt+eq/2;
+      cards+=`<div class="luck"><div class="k">캐릭 반반 승률</div><div class="v">${rankChip(u)}</div><div class="d">${fmtU(u)}</div><div class="d">${w}승 ${lost}패 (${Math.round(w/n*100)}%)</div></div>`; }
+  }
+  const lostLRaw=$("rLostL").value;
+  if(lostLRaw!=="" && dL){
+    const lost=Number(lostLRaw)||0, gW=Math.max(0,lost-($("rGL").checked?1:0)), w=Math.max(0,kl-gW), n=w+lost;
+    if(n>0){ let gt=0,eq=0; for(let i=0;i<=n;i++){ const p=binom(n,i,winL); if(i>w) gt+=p; else if(i===w) eq=p; } const u=gt+eq/2;
+      cards+=`<div class="luck"><div class="k">광추 픽업 승률</div><div class="v">${rankChip(u)}</div><div class="d">${fmtU(u)}</div><div class="d">${w}승 ${lost}패 (${Math.round(w/n*100)}%)</div></div>`; }
+  }
+  $("lucks").innerHTML=cards||`<p class="hint">뽑기 수를 넣으면 결과가 나와.</p>`;
+  // 종합
+  const Ec=pullsPer5(rateC,90)*(2-winC), El=pullsPer5(rateL,80)*(2-winL);
+  let U=null;
+  if(dC||dL){
+    const A=dC||[1], B=dL||[1], obs=(dC?Math.min(kc,capC)*Ec:0)+(dL?Math.min(kl,capL)*El:0);
+    let gt=0,eq=0;
+    for(let i=0;i<A.length;i++) for(let j=0;j<B.length;j++){ const s=(dC?i*Ec:0)+(dL?j*El:0), p=A[i]*B[j]; if(s>obs+1e-6) gt+=p; else if(Math.abs(s-obs)<=1e-6) eq+=p; }
+    U=gt+eq/2;
+  }
+  if(U===null){ $("vPct").textContent="–"; $("vTag").textContent="–"; $("vDesc").textContent=""; return; }
+  const [t,bg,fg]=tier(U);
+  $("vPct").textContent=fmtU(U); $("vPct").style.color="";
+  $("vTag").textContent=t; $("vTag").style.background=bg; $("vTag").style.color=fg;
+  $("vDesc").textContent=`총 ${N+NL}뽑으로 한정 캐릭 ${kc}장${dL?", 전광 "+kl+"재":""}. 같은 뽑기 수를 쓴 사람 100명 중 약 ${Math.max(1,Math.round(U*100))}등이야. (캐릭 1장 ≈ ${Math.round(Ec)}뽑, 전광 1재 ≈ ${Math.round(El)}뽑 가치로 환산)`;
+}
+let rtm; function rSchedule(){ clearTimeout(rtm); rtm=setTimeout(rRun,200); }
+rLoad(); renderList();
+$("rf").addEventListener("input",e=>{ const t=e.target; if(t.dataset.f){ const c=chars[+t.dataset.i]; c[t.dataset.f]= t.dataset.f==="n"? t.value : Number(t.value); } rSchedule(); });
+$("rf").addEventListener("change",rSchedule);
+$("clist").addEventListener("click",e=>{ const d=e.target.dataset.del; if(d!==undefined){ chars.splice(+d,1); renderList(); rSchedule(); } });
+$("addC").addEventListener("click",()=>{ chars.push({n:"캐릭"+(chars.length+1),e:0,l:0}); renderList(); rSchedule(); });
+$("f").addEventListener("change",rSchedule);
+// 탭
+function showTab(t){ $("tabFwd").hidden=t!=="fwd"; $("tabRev").hidden=t!=="rev";
+  $("tbF").setAttribute("aria-selected",t==="fwd"); $("tbR").setAttribute("aria-selected",t==="rev");
+  try{ localStorage.setItem("hsr-warp-tab",t); }catch(e){} }
+$("tbF").addEventListener("click",()=>showTab("fwd")); $("tbR").addEventListener("click",()=>showTab("rev"));
+try{ showTab(localStorage.getItem("hsr-warp-tab")||"fwd"); }catch(e){ showTab("fwd"); }
+rRun();
+</script>
+
+</body>
+</html>
